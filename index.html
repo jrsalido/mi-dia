@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover: usa toda la pantalla del iPhone (respetando la muesca con env(safe-area-inset-*)) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mi Día</title>
+  <meta name="description" content="Planifica tu día desde el móvil: rocas, cajón desastre, horario y pomodoro.">
+  <meta name="theme-color" content="#f6f4f1">
+
+  <!-- Para que, al añadirla a la pantalla de inicio, se abra como una app (sin barras de Safari) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mi Día">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="iconos/icono-180.png">
+  <link rel="icon" href="iconos/icono.svg" type="image/svg+xml">
+
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<!-- ======================= PANTALLA: HOY ======================= -->
+<section class="pantalla" id="pantalla-hoy">
+  <header class="cabecera">
+    <p class="saludo" id="saludo">Hola 👋</p>
+    <h1>Hoy</h1>
+    <p class="subtitulo" id="fecha-hoy"></p>
+  </header>
+
+  <div class="aviso-instalar" id="aviso-instalar" hidden>
+    <span class="aviso-instalar-emoji">📲</span>
+    <p><strong>Instálala en tu iPhone</strong><br>Toca <b>Compartir</b> en Safari y elige <b>«Añadir a pantalla de inicio»</b>.</p>
+    <button class="boton-icono" id="btn-cerrar-instalar" aria-label="Cerrar">✕</button>
+  </div>
+
+  <div class="tarjeta progreso">
+    <div class="progreso-cabecera">
+      <span id="progreso-texto"></span>
+      <strong id="progreso-porcentaje">0 %</strong>
+    </div>
+    <div class="progreso-barra"><div class="progreso-relleno" id="progreso-relleno"></div></div>
+    <div class="mini-resumen">
+      <span>🗓️ <b id="resumen-tareas">0/0</b></span>
+      <span>🪨 <b id="resumen-rocas">0/0</b></span>
+      <span>🍅 <b id="resumen-pomodoros">0</b></span>
+      <span>⏱️ <b id="resumen-foco">0 min</b></span>
+    </div>
+  </div>
+
+  <h2 class="seccion-titulo">Mis 3 rocas <small>lo que de verdad importa</small></h2>
+  <div class="rocas" id="rocas"></div>
+
+  <h2 class="seccion-titulo">En tu horario</h2>
+  <div id="tarjeta-ahora"></div>
+
+  <button class="boton-fantasma ancho" id="btn-nuevo-dia"><span data-icono="sol"></span>Empezar un nuevo día</button>
+</section>
+
+<!-- ======================= PANTALLA: CAJÓN ======================= -->
+<section class="pantalla" id="pantalla-cajon" hidden>
+  <header class="cabecera">
+    <h1>Cajón</h1>
+    <p class="subtitulo">Vacía aquí tu cabeza. Toca una tarea para ponerle hora.</p>
+  </header>
+
+  <form class="nueva-tarea" id="form-tarea" autocomplete="off">
+    <div class="nueva-tarea-fila">
+      <span class="nueva-tarea-mas" data-icono="mas"></span>
+      <input id="input-tarea" type="text" maxlength="140" placeholder="Nueva tarea…" enterkeyhint="done">
+      <button type="submit" class="boton-rojo" id="btn-anadir" disabled>Añadir</button>
+    </div>
+    <div class="opciones-rapidas">
+      <div id="chips-prioridad-nueva"></div>
+      <div id="chips-duracion-nueva"></div>
+    </div>
+  </form>
+
+  <ul class="lista-tareas" id="lista-cajon"></ul>
+</section>
+
+<!-- ======================= PANTALLA: HORARIO ======================= -->
+<section class="pantalla" id="pantalla-horario" hidden>
+  <header class="cabecera cabecera-con-boton">
+    <div>
+      <h1>Horario</h1>
+      <p class="subtitulo" id="horario-total"></p>
+    </div>
+    <button class="boton-icono" id="btn-ajustes-horario" data-icono="ajustes" aria-label="Elegir horas del horario"></button>
+  </header>
+  <p class="ayuda">Toca un hueco para poner una tarea · Mantén pulsada una tarea para moverla</p>
+  <div class="tarjeta horario-tarjeta">
+    <div class="horario-rejilla" id="horario-rejilla"></div>
+  </div>
+</section>
+
+<!-- ======================= PANTALLA: FOCO (pomodoro) ======================= -->
+<section class="pantalla" id="pantalla-foco" hidden>
+  <header class="cabecera">
+    <h1>Foco</h1>
+    <p class="subtitulo">Bloques de concentración con descansos</p>
+  </header>
+
+  <div class="pomodoro" id="pomodoro" data-modo="foco">
+    <div class="pomodoro-modos">
+      <button class="modo" data-modo="foco">Foco</button>
+      <button class="modo" data-modo="descanso">Descanso</button>
+      <button class="modo" data-modo="descansoLargo">Largo</button>
+    </div>
+
+    <div class="reloj">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <circle class="reloj-fondo" cx="100" cy="100" r="90"></circle>
+        <circle class="reloj-progreso" id="reloj-progreso" cx="100" cy="100" r="90"></circle>
+      </svg>
+      <div class="reloj-texto">
+        <span class="reloj-tiempo" id="reloj-tiempo">25:00</span>
+        <span class="reloj-etiqueta" id="reloj-etiqueta">Foco</span>
+      </div>
+    </div>
+
+    <div class="pomodoro-controles">
+      <button class="boton-redondo" id="pomo-reiniciar" data-icono="reiniciar" aria-label="Reiniciar"></button>
+      <button class="boton-play" id="pomo-play" aria-label="Empezar o pausar"></button>
+      <button class="boton-redondo" id="pomo-saltar" data-icono="saltar" aria-label="Saltar al siguiente"></button>
+    </div>
+    <div class="tomates" id="tomates"></div>
+  </div>
+
+  <h2 class="seccion-titulo">Ajustes</h2>
+  <div class="tarjeta ajustes-pomodoro">
+    <div class="fila-chips presets">
+      <button class="chip" data-preset="25/5">Clásico 25/5</button>
+      <button class="chip" data-preset="50/10">Profundo 50/10</button>
+      <button class="chip" data-preset="1/1">Prueba 1/1</button>
+    </div>
+    <div class="ajuste-fila" data-ajuste="foco"><span>Foco</span><div class="stepper"><button data-paso="-1">−</button><b></b><button data-paso="1">+</button></div></div>
+    <div class="ajuste-fila" data-ajuste="descanso"><span>Descanso</span><div class="stepper"><button data-paso="-1">−</button><b></b><button data-paso="1">+</button></div></div>
+    <div class="ajuste-fila" data-ajuste="descansoLargo"><span>Descanso largo</span><div class="stepper"><button data-paso="-1">−</button><b></b><button data-paso="1">+</button></div></div>
+    <div class="ajuste-fila" data-ajuste="cadaCuantos"><span>Largo cada</span><div class="stepper"><button data-paso="-1">−</button><b></b><button data-paso="1">+</button></div></div>
+  </div>
+</section>
+
+<!-- Botón rojo flotante para añadir tareas -->
+<button class="boton-flotante" id="btn-flotante" data-icono="mas" aria-label="Añadir tarea"></button>
+
+<!-- Barra de pestañas de abajo -->
+<nav class="barra-pestanas" aria-label="Secciones">
+  <button class="pestana" data-pestana="hoy"><span data-icono="sol"></span><span>Hoy</span></button>
+  <button class="pestana" data-pestana="cajon"><span data-icono="bandeja"></span><span>Cajón</span><b class="insignia" id="insignia-cajon" hidden></b></button>
+  <button class="pestana" data-pestana="horario"><span data-icono="calendario"></span><span>Horario</span></button>
+  <button class="pestana" data-pestana="foco"><span data-icono="foco"></span><span id="pestana-foco-texto">Foco</span></button>
+</nav>
+
+<!-- Hoja inferior (se rellena desde los scripts: ficha de tarea, elegir hueco, ajustes…) -->
+<div class="fondo-hoja" id="fondo-hoja"></div>
+<div class="hoja" id="hoja" role="dialog" aria-modal="true">
+  <div class="hoja-asa" id="hoja-asa"></div>
+  <div id="hoja-contenido"></div>
+</div>
+
+<!-- Celebración cuando completas todas las tareas del horario -->
+<div class="celebracion" id="celebracion" hidden>
+  <div class="celebracion-tarjeta" role="dialog" aria-labelledby="celebracion-titulo">
+    <div class="celebracion-emoji">🏆</div>
+    <h2 id="celebracion-titulo">¡Día conseguido!</h2>
+    <p id="celebracion-detalle"></p>
+    <div class="celebracion-botones">
+      <button class="boton-fantasma" id="btn-mas-confeti">🎊 Más</button>
+      <button class="boton-rojo" id="btn-cerrar-celebracion">¡Genial!</button>
+    </div>
+  </div>
+</div>
+
+<canvas class="lienzo-confeti" id="lienzo-confeti"></canvas>
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+<!-- Scripts: el orden importa (cada uno usa funciones de los anteriores) -->
+<script src="scripts/utilidades.js"></script>
+<script src="scripts/almacenamiento.js"></script>
+<script src="scripts/sonidos.js"></script>
+<script src="scripts/confeti.js"></script>
+<script src="scripts/hojas.js"></script>
+<script src="scripts/rocas.js"></script>
+<script src="scripts/pomodoro.js"></script>
+<script src="scripts/tareas.js"></script>
+<script src="scripts/horario.js"></script>
+<script src="scripts/app.js"></script>
+</body>
+</html>
